@@ -1,0 +1,93 @@
+- name: configure shipping component
+  hosts: shipping
+  become: yes
+  tasks:
+    - name: installing maven
+      ansible.builtin.dnf:
+        name: maven
+        state: installed
+
+    - name: install PyMySQL and cryptography #foundout these dependencies in error and installing 
+      ansible.builtin.pip:
+        name: {{ item }}
+        executable: pip3.9
+        loop:
+          - cryptography
+          - PyMySQL
+
+    - name: create roboshop system user
+      ansible.builtin.user:
+        name: roboshop
+        shell: /sbin/nologin
+        system: true
+        home: /app
+
+    - name: create app directory
+      ansible.builtin.file:
+        path: /app #which path to create
+        state: directory #directory ni create chestundi
+
+    - name: download shipping code
+      ansible.builtin.get_url:
+        url: https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip
+        dest: /tmp/shipping.zip
+
+#this module by default thinks, file exists on ansible control server, need to extract on to remote machine
+#emote_src means file already exists in catalogue server
+    - name: extract shipping code
+      ansible.builtin.unarchive:
+        src: /tmp/shipping.zip
+        dest: /app
+        remote_src: yes
+
+    - name: install maven dependencies
+      ansible.builtin.command: mvn clean package 
+      args: #ansible em chesthadi ante ee argument pass chesinapudu, ee directory loki velli then command run chestundi
+        chdir: /app
+
+    - name: rename jar file
+      ansible.builtin.command: mv target/shipping-1.0.jar shipping.jar 
+
+    - name: copy shipping service to system directory
+      ansible.builtin.copy:
+        src: shipping.service
+        dest: /etc/systemd/system/shipping.service
+
+    - name: daemon reload
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+
+    - name: start and enable shipping services
+      ansible.builtin.service:
+        name: shipping
+        state: started
+        enabled: yes
+
+    - name: install mysql client
+      ansible.builtin.dnf:
+        name: mysql
+        state: installed
+
+    # - name: connect to mysql using app user
+    #   community.mysql.mysql_info:
+    #     login_user: shipping
+    #     login_password: RoboShop@1
+    #     login_host: mysql.robolearning.site
+    #     login_db: cities
+
+    - name: import data
+      community.mysql.mysql_db:
+        login_user: root
+        login_password: RoboShop@1
+        login_host: mysql.robolearning.site
+        state: import
+        target: {{ item }}
+      loop:
+        - /app/db/schema.sql
+        - /app/db/app-user.sql 
+        - /app/db/master-data.sql 
+
+    - name: restart shipping
+      ansible.builtin.service:
+        state: restarted
+        name: shipping
