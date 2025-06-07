@@ -1,4 +1,4 @@
-- name: Configuring Redis
+- name: Install Redis component
   become: yes
   hosts: Redis
   tasks:
@@ -19,11 +19,16 @@
       regexp: '127.0.0.1'
       replace: '0.0.0.0'
 
-    - name: Update config file
-      
+    - name: disable protected mode
+      ansible.builtin.lineinfile:
+      path: /etc/redis/redis.conf
+      regexp: 'protected-mode'
+      line: protected-mode  no
+
 
     - name: start and enable services
       ansible.builtin.service:
       name: redis
       state: started
       enabled: yes
+      
