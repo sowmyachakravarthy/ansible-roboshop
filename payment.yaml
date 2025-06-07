@@ -1,0 +1,54 @@
+- name: configuring payment component
+  hosts: payment
+  become: yes
+  tasks:
+    - name: install python3 packages
+      ansible.builtin.dnf:
+        name: "{{ item }}""
+        state: installed
+        loop:
+          - python3
+          - gcc
+          - python3-devel
+
+    - name: create roboshop system user
+      ansible.builtin.user:
+        name: roboshop
+        shell: /sbin/nologin
+        system: true
+        home: /app
+
+    - name: create app directory
+      ansible.builtin.file:
+        path: /app #which path to create
+        state: directory #directory ni create chestundi
+
+    - name: download payment code
+      ansible.builtin.get_url:
+        url: https://roboshop-artifacts.s3.amazonaws.com/payment-v3.zip
+        dest: /tmp/payment.zip
+
+#this module by default thinks, file exists on ansible control server, need to extract on to remote machine
+#emote_src means file already exists in catalogue server
+    - name: extract payment code
+      ansible.builtin.unarchive:
+        src: /tmp/payment.zip
+        dest: /app
+        remote_src: yes
+
+    - name: install dependencies
+      ansible.builtin.pip:
+        requirements: requirements.txt
+        executable: pip3.9
+      args: #ansible em chesthadi ante ee argument pass chesinapudu, ee directory loki velli then command run chestundi
+        chdir: /app
+
+    - name: daemon reload
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+
+    - name: start and enable payment services
+      ansible.builtin.service:
+        name: payment
+        state: started
+        enabled: yes
