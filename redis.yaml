@@ -1,6 +1,6 @@
 - name: Install Redis component
   become: yes
-  hosts: Redis
+  hosts: redis
   tasks:
     - name: disable default redis
       ansible.builtin.command: dnf module disable redis -y
