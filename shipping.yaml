@@ -9,7 +9,7 @@
 
     - name: install PyMySQL and cryptography #foundout these dependencies in error and installing 
       ansible.builtin.pip:
-        name: "{{ item }}""
+        name: "{{ item }}"
         executable: pip3.9
         loop:
           - cryptography
@@ -81,7 +81,7 @@
         login_password: RoboShop@1
         login_host: mysql.robolearning.site
         state: import
-        target: "{{ item }}""
+        target: "{{ item }}"
       loop:
         - /app/db/schema.sql
         - /app/db/app-user.sql 
