@@ -43,6 +43,11 @@
       args: #ansible em chesthadi ante ee argument pass chesinapudu, ee directory loki velli then command run chestundi
         chdir: /app
 
+    - name: copy payment service
+      ansible.builtin.copy:
+        src: payment.service
+        dest: /etc/systemd/system/payment.service
+
     - name: daemon reload
       ansible.builtin.systemd_service:
         daemon_reload: true
@@ -52,3 +57,5 @@
         name: payment
         state: started
         enabled: yes
+
+    
