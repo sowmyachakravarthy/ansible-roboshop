@@ -78,6 +78,8 @@
     #     login_db: cities
 
     - name: import data
+      tags: #This tag is used to specifically run just this module and not the entire code
+        - import # -t import is used on command line to execute tag
       community.mysql.mysql_db:
         name: all
         login_user: root
