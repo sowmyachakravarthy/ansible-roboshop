@@ -67,3 +67,10 @@
       name: mongodb-mongosh
       state: present # or you can give install also, try once with install while running
 
+  - name: load products data
+    # community.mongodb.mongodb_shell:
+    # file: "/app/db/master-data.js"
+    # idempotent: yes
+    # login_host: mongodb.robolearning.site
+    ansible.builtin.command: mongosh --host mongodb.robolearning.site </app/db/master-data.js
+
